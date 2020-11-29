@@ -28,20 +28,31 @@ type ParseType<T, E extends Record<string, any> = {}> =
     ? ParseArray<U, E>
     : ParseArray<T, E> | null | undefined;
 
+
+type GraphQLParams<T, E extends Record<string, any> = {}> =
+  T extends `${string}:${infer V},${infer R}`
+    ? [ParseType<V, E>, ...GraphQLParams<R, E>]
+    :
+  T extends `${string}:${infer V}`
+    ? [ParseType<V, E>]
+    : [];
+
 // Map key-value to a native object
-type GraphQLField<K extends string, V, E extends Record<string, any> = {}> =
-  { [key in K]: ParseType<V, E> };
-
-type GraphQLConsume<K extends string, V, Rest, E extends Record<string, any> = {}> =
-  GraphQLField<K, V, E> & GraphQLContent<Rest, E>;
-
-type GraphQLContent<T, E extends Record<string, any> = {}> =
-  T extends `${infer K}:${infer V} ${infer Rest}`
-    ? GraphQLConsume<K, V, Rest, E>
+type GraphQLField<T, E extends Record<string, any> = {}> =
+  T extends `${infer K}(${infer P}):${infer V}`
+    ? { [key in K]: (...params: GraphQLParams<P, E>) => ParseType<V, E> }
     :
   T extends `${infer K}:${infer V}`
-    ? GraphQLField<K, V, E>
+    ? { [key in K]: ParseType<V, E> }
     : {};
+
+type GraphQLContent<T, E extends Record<string, any> = {}> =
+    T extends `${infer Field} ${infer Rest}`
+        ? GraphQLField<Field, E> & GraphQLContent<Rest, E>
+        :
+    T extends string
+        ? GraphQLField<T, E>
+        : {};
 
 type GraphQLEnum<T> =
     T extends `${infer V} ${infer Rest}`
@@ -52,6 +63,14 @@ type GraphQLEnum<T> =
         : T;
 
 type GraphQLMinify<T> =
+  // Remove spaces before colons
+  T extends `${infer A} ,${infer B}`
+    ? GraphQLMinify<`${A},${GraphQLMinify<B>}`>
+    :
+  // Remove spaces after colons
+  T extends `${infer A}, ${infer B}`
+    ? GraphQLMinify<`${A},${GraphQLMinify<B>}`>
+    :
   // Remove spaces before colons
   T extends `${infer A} :${infer B}`
     ? GraphQLMinify<`${A}:${GraphQLMinify<B>}`>
@@ -68,22 +87,6 @@ type GraphQLMinify<T> =
   T extends `${infer A}!  ${infer B}`
     ? GraphQLMinify<`${A}! ${GraphQLMinify<B>}`>
     :
-  // Remove newlines before colons
-  T extends `${infer A}\n:${infer B}`
-    ? GraphQLMinify<`${A}:${GraphQLMinify<B>}`>
-    :
-  // Remove newlines after colons
-  T extends `${infer A}:\n${infer B}`
-    ? GraphQLMinify<`${A}:${GraphQLMinify<B>}`>
-    :
-  // Remove newlines before left bracket
-  T extends `${infer A}\n[${infer B}`
-    ? GraphQLMinify<`${A}[${GraphQLMinify<B>}`>
-    :
-  // Remove newlines after left bracket
-  T extends `${infer A}[\n${infer B}`
-    ? GraphQLMinify<`${A}[${GraphQLMinify<B>}`>
-    :
   // Remove spaces before left bracket
   T extends `${infer A} [${infer B}`
     ? GraphQLMinify<`${A}[${GraphQLMinify<B>}`>
@@ -91,14 +94,6 @@ type GraphQLMinify<T> =
   // Remove newlines after left bracket
   T extends `${infer A}[ ${infer B}`
     ? GraphQLMinify<`${A}[${GraphQLMinify<B>}`>
-    :
-  // Remove newlines before right bracket
-  T extends `${infer A}\n]${infer B}`
-    ? GraphQLMinify<`${A}]${GraphQLMinify<B>}`>
-    :
-  // Remove newlines after right bracket
-  T extends `${infer A}]\n${infer B}`
-    ? GraphQLMinify<`${A}] ${GraphQLMinify<B>}`>
     :
   // Remove spaces before right bracket
   T extends `${infer A} ]${infer B}`
@@ -140,6 +135,12 @@ type GraphQL<T, E extends Record<string, any> = {}> = Readonly<
     : never
 >;
 
+type Test = GraphQL<`{
+  numSides: Int!
+  roll(numRolls: Int!): [Int]
+  rollOnce: Int!
+}`>;
+
 type Episode = GraphQL<`enum{
   NEWHOPE
   EMPIRE
@@ -152,6 +153,6 @@ type Character = GraphQL<`{
   friends: [Character]
   appearsIn: [Episode]!
 }`, {
-    Character: Character,
-    Episode: Episode,
+  Character: Character,
+  Episode: Episode,
 }>;
