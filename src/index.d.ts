@@ -140,13 +140,6 @@ type GraphQL<T, E extends Record<string, any> = {}> = Readonly<
     : never
 >;
 
-type Test = GraphQLMinify<`{
-  id: ID!
-  name: String!
-  friends: [Character]
-  appearsIn: [Episode]!
-}`>;
-
 type Episode = GraphQL<`enum{
   NEWHOPE
   EMPIRE
