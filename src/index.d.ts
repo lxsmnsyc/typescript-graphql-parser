@@ -115,7 +115,7 @@ type GraphQLMinify<T> =
   T extends `\n${infer A}`
     ? GraphQLMinify<A>
     : 
-  T extends `\n${infer A} `
+  T extends `${infer A}\n`
     ? GraphQLMinify<A>
     :
   // Remove trailing spaces
@@ -139,6 +139,10 @@ type GraphQLMinify<T> =
   // Recursively remove newline in between to make it single space
   T extends `${infer A}\n${infer B}`
     ? GraphQLMinify<`${A} ${GraphQLMinify<B>}`>
+    : 
+  // Recursively replace spaces with semi colons
+  T extends `${infer A} ${infer B}`
+    ? GraphQLMinify<`${A};${GraphQLMinify<B>}`>
     : T;
 
 export type GraphQL<T> = Readonly<
