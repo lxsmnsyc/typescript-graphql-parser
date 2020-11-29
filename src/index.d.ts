@@ -12,23 +12,20 @@ interface Scalar {
 type ParseScalar<T> = T extends keyof Scalar ? Scalar[T] : never;
 
 // Parses whether the type is an array or a scalar
-type ParseType<T> =
+type ParseArray<T> =
   T extends `[${infer U}]`
-    ? GraphQLRequired<U>[]
+    ? ParseType<U>[]
     : ParseScalar<T>;
 
 // Transforms the type if it is optional or not
-type GraphQLRequired<T> =
+type ParseType<T> =
   T extends `${infer U}!`
-    ? ParseType<U>
-    : 
-  T extends `${infer U}`
-    ? ParseType<U> | null | undefined
-    : T;
+    ? ParseArray<U>
+    : ParseArray<T> | null | undefined;
 
 // Map key-value to a native object
 type GraphQLField<K extends string, V> =
-  { [key in K]: GraphQLRequired<V> };
+  { [key in K]: ParseType<V> };
 
 type GraphQLConsume<K extends string, V, Rest> =
   GraphQLField<K, V> & GraphQLContent<Rest>;
@@ -84,35 +81,35 @@ type GraphQLMinify<T> =
     :
   // Remove newlines before left bracket
   T extends `${infer A}\n[${infer B}`
-    ? GraphQLMinify<`${A};${GraphQLMinify<B>}`>
+    ? GraphQLMinify<`${A}[${GraphQLMinify<B>}`>
     :
   // Remove newlines after left bracket
   T extends `${infer A}[\n${infer B}`
-    ? GraphQLMinify<`${A};${GraphQLMinify<B>}`>
+    ? GraphQLMinify<`${A}[${GraphQLMinify<B>}`>
     :
   // Remove spaces before left bracket
   T extends `${infer A} [${infer B}`
-    ? GraphQLMinify<`${A};${GraphQLMinify<B>}`>
+    ? GraphQLMinify<`${A}[${GraphQLMinify<B>}`>
     :
   // Remove newlines after left bracket
   T extends `${infer A}[ ${infer B}`
-    ? GraphQLMinify<`${A};${GraphQLMinify<B>}`>
+    ? GraphQLMinify<`${A}[${GraphQLMinify<B>}`>
     :
   // Remove newlines before right bracket
   T extends `${infer A}\n]${infer B}`
-    ? GraphQLMinify<`${A};${GraphQLMinify<B>}`>
+    ? GraphQLMinify<`${A}]${GraphQLMinify<B>}`>
     :
   // Remove newlines after right bracket
   T extends `${infer A}]\n${infer B}`
-    ? GraphQLMinify<`${A};${GraphQLMinify<B>}`>
+    ? GraphQLMinify<`${A}]${GraphQLMinify<B>}`>
     :
   // Remove spaces before right bracket
   T extends `${infer A} ]${infer B}`
-    ? GraphQLMinify<`${A};${GraphQLMinify<B>}`>
+    ? GraphQLMinify<`${A}]${GraphQLMinify<B>}`>
     :
   // Remove newlines after right bracket
   T extends `${infer A}] ${infer B}`
-    ? GraphQLMinify<`${A};${GraphQLMinify<B>}`>
+    ? GraphQLMinify<`${A}]${GraphQLMinify<B>}`>
     :
   // Remove trailing newlines
   T extends `\n${infer A}`
