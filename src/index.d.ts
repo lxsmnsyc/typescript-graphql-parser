@@ -126,14 +126,15 @@ type GraphQLMinify<T> =
     ? GraphQLMinify<`${A} ${GraphQLMinify<B>}`>
     : T;
 
-type GraphQL<T, E extends Record<string, any> = {}> = Readonly<
+
+type GraphQL<T, E extends Record<string, any> = {}> =
   T extends `{${infer Content}}`
     ? GraphQLContent<GraphQLMinify<Content>, E>
     :
   T extends `enum{${infer Content}}`
     ? GraphQLEnum<GraphQLMinify<Content>>
     : never
->;
+;
 
 type Test = GraphQL<`{
   numSides: Int!
