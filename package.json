@@ -1,0 +1,14 @@
+{
+  "name": "typescript-graphql-parser",
+  "version": "0.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/typescript-graphql-parser",
+  "author": "Alexis Munsayac <alexis.munsayac@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "eslint": "^7.14.0",
+    "eslint-config-lxsmnsyc": "^0.1.20",
+    "typescript": "^4.1.2"
+  }
+}
