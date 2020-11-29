@@ -63,6 +63,15 @@ type GraphQLEnum<T> =
         : T;
 
 type GraphQLMinify<T> =
+  T extends `${infer A}"${string}"`
+    ? GraphQLMinify<A>
+    :
+  T extends `"${string}"${infer B}`
+    ? GraphQLMinify<B>
+    :
+  T extends `${infer A}"${string}"${infer B}`
+    ? GraphQLMinify<`${A}${GraphQLMinify<B>}`>
+    :
   // Remove spaces before colons
   T extends `${infer A} ,${infer B}`
     ? GraphQLMinify<`${A},${GraphQLMinify<B>}`>
@@ -98,6 +107,14 @@ type GraphQLMinify<T> =
   // Remove spaces before right bracket
   T extends `${infer A} ]${infer B}`
     ? GraphQLMinify<`${A}]${GraphQLMinify<B>}`>
+    :
+  // Remove newlines after left bracket
+  T extends `${infer A}( ${infer B}`
+    ? GraphQLMinify<`${A}(${GraphQLMinify<B>}`>
+    :
+  // Remove spaces before right bracket
+  T extends `${infer A} )${infer B}`
+    ? GraphQLMinify<`${A})${GraphQLMinify<B>}`>
     :
   // Remove newlines after right bracket
   T extends `${infer A}]  ${infer B}`
@@ -135,12 +152,6 @@ type GraphQL<T, E extends Record<string, any> = {}> =
     ? GraphQLEnum<GraphQLMinify<Content>>
     : never
 ;
-
-type Test = GraphQL<`{
-  numSides: Int!
-  roll(numRolls: Int!): [Int]
-  rollOnce: Int!
-}`>;
 
 type Episode = GraphQL<`enum{
   NEWHOPE
